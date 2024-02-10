@@ -140,14 +140,40 @@ router.get("/getBrc20TokenHolders", async (req, res) => {
 
 router.get("/getBrc20Balances", async (req, res) => {
   const address = req.query.address;
-  const param = `v1/brc-20/balances/${address}`;
+  const limit = 60; // Set your desired limit
+  let offset = 0;
+  let allResults = [];
+
   try {
-    const response = await callAPI(param);
-    res.json(response.data);
+    // Fetch the first set of results
+    let response = await fetch(address, limit, offset);
+    let { total, results } = response.data;
+
+    // Append the current results to allResults
+    allResults = allResults.concat(results);
+
+    // Calculate the remaining pages
+    const remainingPages = Math.ceil((total - limit) / limit);
+
+    // Fetch the remaining pages
+    for (let i = 1; i <= remainingPages; i++) {
+      offset = limit * i;
+      response = await fetch(address, limit, offset);
+      results = response.data.results;
+      allResults = allResults.concat(results);
+    }
+
+    // Respond with all results
+    res.json({ result: allResults });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: err });
+    res.status(500).json({ error: err.message });
   }
 });
+
+async function fetch(address, limit, offset) {
+  const param = `v1/brc-20/balances/${address}?limit=${limit}&offset=${offset}`;
+  return await callAPI(param);
+}
 
 module.exports = router;
