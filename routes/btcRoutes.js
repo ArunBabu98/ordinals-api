@@ -134,6 +134,7 @@ router.get("/ordinals", async (req, res) => {
   try {
     const response = await callAPI(param);
     const rarities = checkRarity(response.data, id);
+    response.data.rarity = rarities;
     console.log(rarities);
     res.json(response.data);
   } catch (err) {
