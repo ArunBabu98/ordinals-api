@@ -13,6 +13,7 @@ router.get("/isActive", (req, res) => {
 
 // checks the status of Hiro
 router.get("/status", async (req, res) => {
+  console.log("Status check!");
   const param = "v1/";
   try {
     const response = await callAPI(param);
