@@ -92,6 +92,38 @@ router.get("/getBrc20Balances", async (req, res) => {
   }
 });
 
+router.get("/getBrc20Activity", async (req, res) => {
+  const address = req.query.address;
+  const limit = 60; // Set your desired limit
+  let offset = 0;
+  let allResults = [];
+  try {
+    // Fetch the first set of results
+    let response = await fecthActivity(address, limit, offset);
+    let { total, results } = response.data;
+
+    // Append the current results to allResults
+    allResults = allResults.concat(results);
+
+    // Calculate the remaining pages
+    const remainingPages = Math.ceil((total - limit) / limit);
+
+    // Fetch the remaining pages
+    for (let i = 1; i <= remainingPages; i++) {
+      offset = limit * i;
+      response = await fecthActivity(address, limit, offset);
+      results = response.data.results;
+      allResults = allResults.concat(results);
+    }
+
+    // Respond with all results
+    res.json({ result: allResults });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // helper method for fetching brc-20 balances
 async function fetchBalances(address, limit, offset) {
   const param = `v1/brc-20/balances/${address}?limit=${limit}&offset=${offset}`;
@@ -101,6 +133,12 @@ async function fetchBalances(address, limit, offset) {
 // helper method for inscription
 async function fecthInscriptions(address, limit, offset) {
   const param = `v1/inscriptions?address=${address}&limit=${limit}&offset=${offset}`;
+  return await callAPI(param);
+}
+
+// helper method for activity
+async function fecthActivity(address, limit, offset) {
+  const param = `v1/brc-20/activity?address=${address}&limit=${limit}&offset=${offset}`;
   return await callAPI(param);
 }
 
